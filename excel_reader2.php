@@ -76,8 +76,8 @@ function GetInt4d($data, $pos) {
 // http://uk.php.net/manual/en/function.getdate.php
 function gmgetdate($ts = null){
 	$k = array('seconds','minutes','hours','mday','wday','mon','year','yday','weekday','month',0);
-	return(array_comb($k,split(":",gmdate('s:i:G:j:w:n:Y:z:l:F:U',is_null($ts)?time():$ts))));
-	} 
+	return(array_comb($k,explode(":",gmdate('s:i:G:j:w:n:Y:z:l:F:U',is_null($ts)?time():$ts))));
+} 
 
 // Added for PHP4 compatibility
 function array_comb($array1, $array2) {
@@ -841,7 +841,7 @@ class Spreadsheet_Excel_Reader {
 
 		// Custom pattern can be POSITIVE;NEGATIVE;ZERO
 		// The "text" option as 4th parameter is not handled
-		$parts = split(";",$format);
+		$parts = explode(";",$format);
 		$pattern = $parts[0];
 		// Negative pattern
 		if (count($parts)>2 && $num==0) {
@@ -1018,7 +1018,6 @@ class Spreadsheet_Excel_Reader {
 
 		$code = v($data,$pos);
 		$length = v($data,$pos+2);
-
 		while ($code != SPREADSHEET_EXCEL_READER_TYPE_EOF) {
 			switch ($code) {
 				case SPREADSHEET_EXCEL_READER_TYPE_SST:
@@ -1244,7 +1243,7 @@ class Spreadsheet_Excel_Reader {
 									if (preg_match("/[^hmsday\/\-:\s\\\,AMP]/i", $tmp) == 0) { // found day and time format
 										$isdate = TRUE;
 										$formatstr = $tmp;
-										$formatstr = str_replace(array('AM/PM','mmmm','mmm'), array('a','F','M'), $formatstr);
+										$formatstr = str_ireplace(array('AM/PM','mmmm','mmm'), array('a','F','M'), $formatstr);
 										// m/mm are used for both minutes and months - oh SNAP!
 										// This mess tries to fix for that.
 										// 'm' == minutes only if following h/hh or preceding s/ss
@@ -1254,10 +1253,10 @@ class Spreadsheet_Excel_Reader {
 										$formatstr = preg_replace("/(^|[^m])m([^m]|$)/", '$1n$2', $formatstr);
 										$formatstr = preg_replace("/(^|[^m])m([^m]|$)/", '$1n$2', $formatstr);
 										// else it's months
-										$formatstr = str_replace('mm', 'm', $formatstr);
+										$formatstr = str_ireplace('mm', 'm', $formatstr);
 										// Convert single 'd' to 'j'
 										$formatstr = preg_replace("/(^|[^d])d([^d]|$)/", '$1j$2', $formatstr);
-										$formatstr = str_replace(array('dddd','ddd','dd','yyyy','yy','hh','h'), array('l','D','d','Y','y','H','g'), $formatstr);
+										$formatstr = str_ireplace(array('dddd','ddd','dd','yyyy','yy','hh','h'), array('l','D','d','Y','y','H','g'), $formatstr);
 										$formatstr = preg_replace("/ss?/", 's', $formatstr);
 									}
 								}
@@ -1616,9 +1615,8 @@ class Spreadsheet_Excel_Reader {
 				$rectype = 'date';
 				// Convert numeric value into a date
 				$utcDays = floor($numValue - ($this->nineteenFour ? SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS1904 : SPREADSHEET_EXCEL_READER_UTCOFFSETDAYS));
-				$utcValue = ($utcDays) * SPREADSHEET_EXCEL_READER_MSINADAY;
+				$utcValue = ($utcDays < 1) ? time() : ($utcDays) * SPREADSHEET_EXCEL_READER_MSINADAY;
 				$dateinfo = gmgetdate($utcValue);
-
 				$raw = $numValue;
 				$fractionalDay = $numValue - floor($numValue) + .0000001; // The .0000001 is to fix for php/excel fractional diffs
 
